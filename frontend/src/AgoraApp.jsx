@@ -25,12 +25,12 @@ const DEFAULT_REASIGNACION_OPCIONES = [
   "Subsecretaría de turismo",
 ];
 const SECRETARIA_FIJA = "Secretaria de desarrollo economico";
-const PENDIENTES_ENDPOINT_URL = "https://notificationagorapp-1.onrender.com/qprs/por-secretaria";
-const DETALLE_ENDPOINT_BASE_URL = "https://notificationagorapp-1.onrender.com/qprs";
-const SECRETARIAS_ENDPOINT_URL = "https://notificationagorapp-1.onrender.com/secretarias";
-const ACTUALIZAR_SECRETARIA_ENDPOINT_URL =
-  "https://notificationagorapp-1.onrender.com/qprs/actualizar-secretaria";
-const RESOLVER_PQRS_ENDPOINT_BASE_URL = "https://notificationagorapp-1.onrender.com/qprs";
+const API_URL = import.meta.env.VITE_API_URL || "https://notificationagorapp-1.onrender.com";
+const PENDIENTES_ENDPOINT_URL = `${API_URL}/qprs/por-secretaria`;
+const DETALLE_ENDPOINT_BASE_URL = `${API_URL}/qprs`;
+const SECRETARIAS_ENDPOINT_URL = `${API_URL}/secretarias`;
+const ACTUALIZAR_SECRETARIA_ENDPOINT_URL = `${API_URL}/qprs/actualizar-secretaria`;
+const RESOLVER_PQRS_ENDPOINT_BASE_URL = `${API_URL}/qprs`;
 
 function addCalendarDays(date, days) {
   const d = new Date(date);
