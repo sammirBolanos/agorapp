@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -19,6 +19,11 @@ const SLA_BY_TIPO = {
 };
 
 const MS_PER_DAY = 86_400_000;
+const REASIGNACION_OPCIONES = [
+  "Subsecretaría de creación y fortalecimiento empresarial",
+  "Subsecretaría de desarrollo rural",
+  "Subsecretaría de turismo",
+];
 
 function addCalendarDays(date, days) {
   const d = new Date(date);
@@ -38,6 +43,13 @@ function daysUntilDeadline(createdAt, tipo) {
   const today = startOfDay(new Date());
   const end = startOfDay(deadline);
   return Math.ceil((end - today) / MS_PER_DAY);
+}
+
+function getDiasTranscurridos(createdAt) {
+  const today = startOfDay(new Date());
+  const start = startOfDay(createdAt);
+  const diff = Math.floor((today - start) / MS_PER_DAY);
+  return Math.max(0, diff);
 }
 
 function formatDate(d) {
@@ -99,7 +111,7 @@ function buildMockPqrsds() {
       tituloIa:
         "Consulta sobre convocatoria de innovación abierta y criterios de elegibilidad.",
       tipo: "Consultas",
-      createdAt: addCalendarDays(now, -28),
+      createdAt: addCalendarDays(now, -35),
       ciudadano: {
         nombre: "Laura Catalina Mejía",
         documento: "CC 1.045.882.001",
@@ -141,7 +153,7 @@ function buildMockPqrsds() {
       tituloIa:
         "Queja por inconsistencia en respuesta a reclamo previo sobre facturación de servicio.",
       tipo: "Quejas",
-      createdAt: addCalendarDays(now, -12),
+      createdAt: addCalendarDays(now, -18),
       ciudadano: {
         nombre: "Ana Patricia Gómez",
         documento: "CC 35.198.765",
@@ -157,6 +169,109 @@ function buildMockPqrsds() {
       borradorRespuesta: `Estimada Ana Patricia,\n\nHemos recibido su queja y activaremos la revisión interna correspondiente. Le informaremos el número de seguimiento y los pasos siguientes dentro del término legal aplicable.\n\nGracias por ayudarnos a mejorar el servicio.\n\nAtentamente,\nEquipo de Atención PQRSD`,
       documentoPaginas: 7,
     },
+    {
+      id: "PQR-006",
+      tituloIa:
+        "Petición de acompañamiento para fortalecimiento de unidad productiva barrial.",
+      tipo: "Información",
+      createdAt: addCalendarDays(now, -3),
+      ciudadano: {
+        nombre: "Julián Esteban Mena",
+        documento: "CC 1.040.220.118",
+        email: "julian.mena@gmail.com",
+        telefono: "+57 312 440 2299",
+      },
+      dependenciaSugerida: "Subsecretaría de creación y fortalecimiento empresarial",
+      resumenBullets: [
+        "Solicita ruta de capacitación para mejorar ventas y formalización.",
+        "Pregunta por programas vigentes para microempresas de barrio.",
+        "Requiere acompañamiento para plan de negocio básico.",
+      ],
+      borradorRespuesta: `Estimado Julián Esteban,\n\nRecibimos su petición y le compartiremos la oferta institucional de acompañamiento empresarial disponible para su unidad productiva.\n\nAtentamente,\nEquipo de Atención PQRSD`,
+      documentoPaginas: 6,
+    },
+    {
+      id: "PQR-007",
+      tituloIa: "Consulta sobre incentivos para turismo comunitario en corregimientos.",
+      tipo: "Consultas",
+      createdAt: addCalendarDays(now, -9),
+      ciudadano: {
+        nombre: "Viviana Restrepo",
+        documento: "CC 43.210.998",
+        email: "vrestrepo@correo.com",
+        telefono: "+57 300 774 1122",
+      },
+      dependenciaSugerida: "Subsecretaría de turismo",
+      resumenBullets: [
+        "Solicita información sobre líneas de apoyo para rutas turísticas locales.",
+        "Pregunta por requisitos para registrarse en programas distritales.",
+        "Requiere claridad sobre cronograma de convocatorias.",
+      ],
+      borradorRespuesta: `Estimada Viviana,\n\nEnviaremos a su correo la información de incentivos y requisitos para iniciativas de turismo comunitario en corregimientos.\n\nCordialmente,\nEquipo de Atención PQRSD`,
+      documentoPaginas: 5,
+    },
+    {
+      id: "PQR-008",
+      tituloIa:
+        "Queja por falta de respuesta a solicitud de asistencia técnica rural.",
+      tipo: "Quejas",
+      createdAt: addCalendarDays(now, -20),
+      ciudadano: {
+        nombre: "Hernán Darío Álvarez",
+        documento: "CC 70.445.113",
+        email: "hdalvarez@campo.co",
+        telefono: "+57 311 980 6671",
+      },
+      dependenciaSugerida: "Subsecretaría de desarrollo rural",
+      resumenBullets: [
+        "El ciudadano reporta no haber recibido respuesta tras radicado previo.",
+        "Solicita visita técnica para validación de cultivo.",
+        "Pide priorización por afectaciones de producción.",
+      ],
+      borradorRespuesta: `Apreciado Hernán Darío,\n\nLamentamos la demora en la respuesta. Priorizaremos su caso y coordinaremos atención técnica en el menor tiempo posible.\n\nAtentamente,\nEquipo de Atención PQRSD`,
+      documentoPaginas: 8,
+    },
+    {
+      id: "PQR-009",
+      tituloIa: "Solicitud de información para participar en feria empresarial local.",
+      tipo: "Información",
+      createdAt: addCalendarDays(now, -6),
+      ciudadano: {
+        nombre: "Natalia Ospina",
+        documento: "CC 1.040.887.542",
+        email: "nospina@emprende.com",
+        telefono: "+57 320 654 3412",
+      },
+      dependenciaSugerida: "Secretaría de Desarrollo Económico",
+      resumenBullets: [
+        "Pregunta por fechas y requisitos para expositores.",
+        "Solicita información sobre costos de inscripción.",
+        "Consulta si hay cupos para emprendimientos gastronómicos.",
+      ],
+      borradorRespuesta: `Estimada Natalia,\n\nLe compartiremos el cronograma de ferias y los requisitos de participación para expositores de emprendimientos locales.\n\nAtentamente,\nEquipo de Atención PQRSD`,
+      documentoPaginas: 4,
+    },
+    {
+      id: "PQR-010",
+      tituloIa:
+        "Consulta sobre proceso de inscripción a talleres de transformación digital.",
+      tipo: "Consultas",
+      createdAt: addCalendarDays(now, -2),
+      ciudadano: {
+        nombre: "Santiago Muñoz",
+        documento: "CC 1.154.223.019",
+        email: "smunoz@correo.co",
+        telefono: "+57 301 333 0099",
+      },
+      dependenciaSugerida: "Secretaría de Innovación Digital",
+      resumenBullets: [
+        "Solicita paso a paso para inscripción a talleres.",
+        "Pregunta por modalidad virtual y presencial.",
+        "Requiere confirmar disponibilidad de cupos.",
+      ],
+      borradorRespuesta: `Estimado Santiago,\n\nLe enviaremos el enlace de inscripción y la oferta vigente de talleres de transformación digital con sus modalidades disponibles.\n\nCordialmente,\nEquipo de Atención PQRSD`,
+      documentoPaginas: 5,
+    },
   ];
 }
 
@@ -166,7 +281,7 @@ const LOREM_ORIGINAL = `Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 function LogoAlcaldiaNavbar({ className = "" }) {
   return (
     <img
-      src="/logo-alcaldia-horizontal.png"
+      src="/alcaldia-1024x369.png"
       alt={ALT_ALCALDIA}
       className={`h-10 w-auto max-w-[min(100%,220px)] object-contain object-left sm:h-11 sm:max-w-[min(100%,320px)] md:max-w-none ${className}`}
     />
@@ -187,45 +302,37 @@ function LogoAlcaldiaLogin({ className = "" }) {
 function AppNavbar() {
   return (
     <header className="border-b border-gray-200/80 bg-[#DDF0F8]">
-      <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-3 px-4 py-3 sm:px-6 md:grid-cols-[1fr_auto_1fr] md:gap-4 lg:px-8">
-        <div className="flex min-w-0 items-center md:justify-self-start">
-          <LogoAlcaldiaNavbar />
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 items-center gap-3 py-3 md:grid-cols-[1fr_auto_1fr] md:gap-4">
+          <div className="flex min-w-0 items-center md:justify-self-start">
+            <LogoAlcaldiaNavbar />
+          </div>
+          <div className="flex flex-col items-center justify-center text-center md:justify-self-center">
+            <p className="text-base font-bold text-gray-900">Atención PQRSD</p>
+            <p className="max-w-md text-xs text-gray-700 sm:text-sm">
+              Peticiones, Quejas, Reclamos, Sugerencias, Denuncias
+            </p>
+          </div>
+          <div className="hidden md:block" aria-hidden />
         </div>
-        <div className="flex flex-col items-center justify-center text-center md:justify-self-center">
-          <p className="text-base font-bold text-gray-900">Atención PQRSD</p>
-          <p className="max-w-md text-xs text-gray-700 sm:text-sm">
-            Peticiones, Quejas, Reclamos, Sugerencias, Denuncias
-          </p>
-        </div>
-        <div className="hidden md:block" aria-hidden />
       </div>
     </header>
   );
 }
 
 function LimiteBadge({ diasRestantes }) {
-  const urgente = diasRestantes <= 3;
-  if (urgente) {
+  if (diasRestantes < 0) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-[#FF8C00] px-3 py-1 text-xs font-semibold text-white shadow-sm">
+      <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700 ring-1 ring-red-200">
         <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
-        {diasRestantes <= 0
-          ? "Vencido"
-          : diasRestantes === 1
-            ? "1 día"
-            : `${diasRestantes} días`}
+        {diasRestantes === -1 ? "-1 día" : `${diasRestantes} días`}
       </span>
     );
   }
-  const suave =
-    diasRestantes <= 7
-      ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200"
-      : "bg-gray-100 text-gray-700 ring-1 ring-gray-200";
+
   return (
-    <span
-      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${suave}`}
-    >
-      {diasRestantes} días
+    <span className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200">
+      {diasRestantes === 1 ? "1 día" : `${diasRestantes} días`}
     </span>
   );
 }
@@ -236,23 +343,23 @@ function LoginView({ onLogin }) {
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <main className="flex flex-1 flex-col items-center justify-center px-4 py-10">
-        <div className="mb-8 flex flex-col items-center text-center">
+      <main className="flex flex-1 flex-col items-center justify-center px-4 py-0 sm:py-0">
+        <div className="mb-4 flex flex-col items-center text-center">
           <LogoAlcaldiaLogin />
-          <p className="mt-5 text-sm text-gray-700">
+          <p className="mt-3 text-sm text-gray-700">
             Secretaría de Desarrollo Económico
           </p>
-          <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900">
-            ÁgoraApp
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-900">
+            ÁgorApp
           </h1>
         </div>
 
-        <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-lg ring-1 ring-gray-100">
-          <p className="mb-6 text-center text-sm font-medium text-[#FF8C00]">
+        <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg ring-1 ring-gray-100">
+          <p className="mb-4 text-center text-sm font-medium text-[#FF8C00]">
             Ingresa tus datos para iniciar sesión
           </p>
 
-          <div className="space-y-5">
+          <div className="space-y-4">
             <div className="flex flex-col items-center">
               <label
                 htmlFor="usuario"
@@ -288,7 +395,7 @@ function LoginView({ onLogin }) {
             </div>
           </div>
 
-          <div className="mt-8">
+          <div className="mt-6">
             <button
               type="button"
               onClick={() => onLogin()}
@@ -303,23 +410,59 @@ function LoginView({ onLogin }) {
   );
 }
 
-function DashboardView({ items, onSelect, onLogout }) {
+function DashboardView({ items, viewMode, onViewModeChange, onSelect, onLogout }) {
+  const isPendientes = viewMode === "pendientes";
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <AppNavbar />
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-end gap-2 px-4 py-2 sm:px-6 lg:px-8">
-        <button
-          type="button"
-          onClick={onLogout}
-          className="rounded-full border border-gray-300 bg-white px-4 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50"
-        >
-          Cerrar sesión
-        </button>
-      </div>
-      <div className="flex-1 px-4 pb-10 pt-2 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-100">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-left text-sm">
+      <div className="flex-1 pb-10 pt-2">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-end py-2">
+            <button
+              type="button"
+              onClick={onLogout}
+              className="rounded-full border border-red-200 bg-red-50 px-4 py-1.5 text-xs font-medium text-red-700 shadow-sm transition hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-200"
+            >
+              Cerrar sesión
+            </button>
+          </div>
+          <div className="mb-3 w-full">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onViewModeChange("pendientes")}
+              className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+                isPendientes
+                  ? "bg-[#DDF0F8] text-gray-900 ring-1 ring-sky-200"
+                  : "bg-white text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50"
+              }`}
+            >
+              Tickets pendientes
+            </button>
+            <button
+              type="button"
+              onClick={() => onViewModeChange("historico")}
+              className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+                !isPendientes
+                  ? "bg-[#DDF0F8] text-gray-900 ring-1 ring-sky-200"
+                  : "bg-white text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50"
+              }`}
+            >
+              Histórico resueltos
+            </button>
+          </div>
+          <div className="mt-2 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">
+              {isPendientes ? "Tickets pendientes" : "Histórico de tickets resueltos"}
+            </h2>
+            <span className="text-xs text-gray-500">
+              {items.length} ticket{items.length === 1 ? "" : "s"}
+            </span>
+          </div>
+          </div>
+          <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-100">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 text-left text-sm">
               <thead className="bg-gray-50/80">
                 <tr>
                   <th className="whitespace-nowrap px-4 py-3 font-semibold text-gray-800">
@@ -340,8 +483,21 @@ function DashboardView({ items, onSelect, onLogout }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white">
+                {items.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-4 py-8 text-center text-sm text-gray-600"
+                    >
+                      {isPendientes
+                        ? "No tienes tickets pendientes."
+                        : "Aún no tienes tickets resueltos en el histórico."}
+                    </td>
+                  </tr>
+                ) : null}
                 {items.map((row) => {
                   const dias = daysUntilDeadline(row.createdAt, row.tipo);
+                  const diasTranscurridos = getDiasTranscurridos(row.createdAt);
                   return (
                     <tr key={row.id} className="hover:bg-gray-50/80">
                       <td className="whitespace-nowrap px-4 py-3 font-medium text-gray-900">
@@ -351,7 +507,8 @@ function DashboardView({ items, onSelect, onLogout }) {
                       <td className="whitespace-nowrap px-4 py-3">
                         <LimiteBadge diasRestantes={dias} />
                         <span className="mt-1 block text-xs text-gray-500">
-                          Creado {formatDate(row.createdAt)}
+                          Lleva {diasTranscurridos} día
+                          {diasTranscurridos === 1 ? "" : "s"} · Creado {formatDate(row.createdAt)}
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3">
@@ -377,7 +534,8 @@ function DashboardView({ items, onSelect, onLogout }) {
                   );
                 })}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -414,8 +572,20 @@ function AccordionDocumento({ paginas }) {
   );
 }
 
-function DetailView({ item, onBack }) {
+function DetailView({ item, onBack, onReassign, onResolve }) {
   const dias = daysUntilDeadline(item.createdAt, item.tipo);
+  const isResuelto = Boolean(item.resuelto);
+  const [showReassignSlider, setShowReassignSlider] = useState(false);
+  const [reassignIndex, setReassignIndex] = useState(() => {
+    const found = REASIGNACION_OPCIONES.indexOf(item.dependenciaSugerida);
+    return found >= 0 ? found : 0;
+  });
+
+  useEffect(() => {
+    const found = REASIGNACION_OPCIONES.indexOf(item.dependenciaSugerida);
+    setReassignIndex(found >= 0 ? found : 0);
+    setShowReassignSlider(false);
+  }, [item.id, item.dependenciaSugerida]);
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
@@ -520,19 +690,83 @@ function DetailView({ item, onBack }) {
           </section>
 
           <footer className="mt-8 flex flex-wrap justify-end gap-3 border-t border-gray-100 pt-6">
-            <button
-              type="button"
-              className="rounded-full border border-gray-300 bg-white px-6 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
-            >
-              Reasignar
-            </button>
-            <button
-              type="button"
-              className="rounded-full bg-[#DDF0F8] px-6 py-2.5 text-sm font-semibold text-gray-900 shadow-sm transition hover:bg-[#c9e6f5] focus:outline-none focus:ring-2 focus:ring-sky-300 focus:ring-offset-2"
-            >
-              Aprobar y Enviar
-            </button>
+            {isResuelto ? (
+              <span className="inline-flex items-center rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-200">
+                Resuelto
+              </span>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowReassignSlider((v) => !v)}
+                  className="rounded-full border border-gray-300 bg-white px-6 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                >
+                  Reasignar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onResolve()}
+                  className="rounded-full bg-[#DDF0F8] px-6 py-2.5 text-sm font-semibold text-gray-900 shadow-sm transition hover:bg-[#c9e6f5] focus:outline-none focus:ring-2 focus:ring-sky-300 focus:ring-offset-2"
+                >
+                  Aprobar y Enviar
+                </button>
+              </>
+            )}
           </footer>
+
+          {showReassignSlider && !isResuelto ? (
+            <section className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <h3 className="text-sm font-semibold text-gray-900">
+                Reasignar petición
+              </h3>
+              <p className="mt-1 text-xs text-gray-600">
+                Selecciona la dependencia y confirma para volver al listado.
+              </p>
+
+              <div className="mt-4">
+                <label
+                  htmlFor="dependencia-reasignacion"
+                  className="mb-2 block text-xs font-medium text-gray-700"
+                >
+                  Dependencia
+                </label>
+                <select
+                  id="dependencia-reasignacion"
+                  value={reassignIndex}
+                  onChange={(e) => setReassignIndex(Number(e.target.value))}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-200"
+                  aria-label="Seleccionar dependencia para reasignar"
+                >
+                  {REASIGNACION_OPCIONES.map((opcion, idx) => (
+                    <option key={opcion} value={idx}>
+                      {opcion}
+                    </option>
+                  ))}
+                </select>
+                <div className="mt-3 rounded-lg border border-sky-100 bg-white px-3 py-2 text-sm text-gray-800">
+                  <span className="font-semibold">Seleccionada:</span>{" "}
+                  {REASIGNACION_OPCIONES[reassignIndex]}
+                </div>
+              </div>
+
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowReassignSlider(false)}
+                  className="rounded-full border border-gray-300 bg-white px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onReassign(REASIGNACION_OPCIONES[reassignIndex])}
+                  className="rounded-full bg-[#DDF0F8] px-4 py-2 text-xs font-semibold text-gray-900 hover:bg-[#c9e6f5]"
+                >
+                  Reasignar y volver
+                </button>
+              </div>
+            </section>
+          ) : null}
         </article>
       </div>
     </div>
@@ -541,16 +775,31 @@ function DetailView({ item, onBack }) {
 
 export default function AgoraApp() {
   const [vista, setVista] = useState("login");
+  const [bandejaActiva, setBandejaActiva] = useState("pendientes");
   const [seleccionId, setSeleccionId] = useState(null);
-
-  const mockPqrsds = useMemo(() => buildMockPqrsds(), []);
+  const [pqrsds, setPqrsds] = useState(() => buildMockPqrsds());
+  const ticketsPendientes = useMemo(
+    () => pqrsds.filter((p) => !p.reasignado && !p.resuelto),
+    [pqrsds]
+  );
+  const ticketsResueltos = useMemo(
+    () => pqrsds.filter((p) => p.resuelto),
+    [pqrsds]
+  );
   const seleccion = useMemo(
-    () => mockPqrsds.find((p) => p.id === seleccionId) ?? null,
-    [mockPqrsds, seleccionId]
+    () => pqrsds.find((p) => p.id === seleccionId) ?? null,
+    [pqrsds, seleccionId]
   );
 
   if (vista === "login") {
-    return <LoginView onLogin={() => setVista("dashboard")} />;
+    return (
+      <LoginView
+        onLogin={() => {
+          setBandejaActiva("pendientes");
+          setVista("dashboard");
+        }}
+      />
+    );
   }
 
   if (vista === "detalle" && seleccion) {
@@ -561,13 +810,38 @@ export default function AgoraApp() {
           setVista("dashboard");
           setSeleccionId(null);
         }}
+        onReassign={(dependencia) => {
+          setPqrsds((prev) =>
+            prev.map((p) =>
+              p.id === seleccion.id
+                ? { ...p, dependenciaSugerida: dependencia, reasignado: true }
+                : p
+            )
+          );
+          setVista("dashboard");
+          setSeleccionId(null);
+        }}
+        onResolve={() => {
+          setPqrsds((prev) =>
+            prev.map((p) =>
+              p.id === seleccion.id
+                ? { ...p, resuelto: true, resueltoAt: new Date() }
+                : p
+            )
+          );
+          setBandejaActiva("historico");
+          setVista("dashboard");
+          setSeleccionId(null);
+        }}
       />
     );
   }
 
   return (
     <DashboardView
-      items={mockPqrsds}
+      items={bandejaActiva === "pendientes" ? ticketsPendientes : ticketsResueltos}
+      viewMode={bandejaActiva}
+      onViewModeChange={setBandejaActiva}
       onSelect={(id) => {
         setSeleccionId(id);
         setVista("detalle");
