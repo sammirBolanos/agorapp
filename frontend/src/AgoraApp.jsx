@@ -82,6 +82,9 @@ function buildMockPqrsds() {
         "Menciona un local en Laureles y actividad de servicios gastronómicos.",
         "Pide orientación sobre inspección sanitaria y documentos en línea.",
       ],
+      peticionOriginal: `Yo, María Fernanda López, solicito información detallada sobre el trámite de licencia de funcionamiento para un establecimiento gastronómico ubicado en Laureles (comuna 10). Agradezco indicar requisitos actualizados, costos aproximados, tiempos de respuesta y si el proceso puede hacerse en línea.
+
+    También solicito orientación sobre la documentación sanitaria y el procedimiento de visita de inspección.`,
       borradorRespuesta: `Estimada María Fernanda,\n\nDe acuerdo con su petición, le informamos que el trámite de licencia de funcionamiento puede iniciarse a través del portal de trámites de la Alcaldía de Medellín. Los requisitos generales incluyen certificado de uso del suelo, RUT actualizado y cumplimiento de normativa sectorial.\n\nPara su caso específico en Laureles, le sugerimos agendar una orientación con la línea de atención de Desarrollo Económico.\n\nCordial saludo,\nEquipo de Atención PQRSD`,
       documentoPaginas: 7,
     },
@@ -103,6 +106,9 @@ function buildMockPqrsds() {
         "Adjunta radicado y comprobante de envío de soportes.",
         "Solicita estado del trámite y fecha estimada de respuesta.",
       ],
+      peticionOriginal: `Yo, Carlos Andrés Vélez, presento queja por la demora en la respuesta a mi solicitud de subsidio para mipymes, radicada hace más de 20 días hábiles.
+
+    No he recibido comunicación oficial sobre el estado del trámite. Solicito respuesta formal con fecha estimada de decisión y validación de los documentos adjuntos.`,
       borradorRespuesta: `Apreciado Carlos Andrés,\n\nHemos registrado su queja y verificaremos el estado del radicado en el sistema de gestión. En un plazo máximo de cinco (5) días hábiles le remitiremos el avance correspondiente y, de ser necesario, las acciones correctivas aplicables.\n\nAgradecemos la información suministrada.\n\nAtentamente,\nEquipo de Atención PQRSD`,
       documentoPaginas: 7,
     },
@@ -124,6 +130,9 @@ function buildMockPqrsds() {
         "Pregunta por requisitos de constitución y antigüedad mínima.",
         "Consulta si aplica para equipos interdisciplinarios.",
       ],
+      peticionOriginal: `Yo, Laura Catalina Mejía, solicito información oficial sobre la convocatoria de innovación abierta vigente.
+
+    En particular requiero conocer criterios de elegibilidad, requisitos de constitución para startups, antigüedad mínima exigida y si se permite la postulación de equipos interdisciplinarios con enfoque civic tech.`,
       borradorRespuesta: `Estimada Laura Catalina,\n\nLe confirmamos que la convocatoria vigente publica los criterios de elegibilidad en el anexo técnico. En líneas generales, se requiere personería jurídica o natural con RUT y cumplimiento de requisitos de experiencia indicados por línea estratégica.\n\nPuede remitir dudas puntuales sobre su caso y adjuntar una breve ficha del equipo.\n\nSaludos cordiales,\nEquipo de Atención PQRSD`,
       documentoPaginas: 7,
     },
@@ -145,6 +154,9 @@ function buildMockPqrsds() {
         "Pregunta si requiere cita previa.",
         "Solicita confirmación de canales digitales alternativos.",
       ],
+      peticionOriginal: `Yo, Diego León Arango, solicito información sobre horarios y sedes habilitadas para radicación presencial de PQRSD.
+
+    Adicionalmente, agradezco confirmar si se requiere cita previa y cuáles son los canales virtuales disponibles para radicar fuera del horario de atención presencial.`,
       borradorRespuesta: `Apreciado Diego,\n\nLa radicación de PQRSD está disponible de manera digital las 24 horas. Para atención presencial, puede consultar el calendario y sedes habilitadas en la página institucional; algunos servicios requieren agendamiento.\n\nQuedamos atentos a cualquier inquietud adicional.\n\nCordial saludo,\nEquipo de Atención PQRSD`,
       documentoPaginas: 7,
     },
@@ -166,6 +178,9 @@ function buildMockPqrsds() {
         "Solicita revisión por parte de un supervisor.",
         "Adjunta historial de mensajes y radicados.",
       ],
+      peticionOriginal: `Yo, Ana Patricia Gómez, presento queja por inconsistencia entre dos respuestas oficiales recibidas frente a mi reclamo por facturación.
+
+    Solicito revisión por parte de un supervisor, unificación de la respuesta institucional y aclaración definitiva del valor facturado, adjuntando los radicados previos.`,
       borradorRespuesta: `Estimada Ana Patricia,\n\nHemos recibido su queja y activaremos la revisión interna correspondiente. Le informaremos el número de seguimiento y los pasos siguientes dentro del término legal aplicable.\n\nGracias por ayudarnos a mejorar el servicio.\n\nAtentamente,\nEquipo de Atención PQRSD`,
       documentoPaginas: 7,
     },
@@ -187,6 +202,9 @@ function buildMockPqrsds() {
         "Pregunta por programas vigentes para microempresas de barrio.",
         "Requiere acompañamiento para plan de negocio básico.",
       ],
+      peticionOriginal: `Yo, Julián Esteban Mena, solicito acompañamiento para fortalecer mi unidad productiva barrial.
+
+    Requiero información sobre capacitaciones en ventas, formalización y construcción de plan de negocio, así como los programas de apoyo vigentes para microempresas en mi comuna.`,
       borradorRespuesta: `Estimado Julián Esteban,\n\nRecibimos su petición y le compartiremos la oferta institucional de acompañamiento empresarial disponible para su unidad productiva.\n\nAtentamente,\nEquipo de Atención PQRSD`,
       documentoPaginas: 6,
     },
@@ -207,6 +225,9 @@ function buildMockPqrsds() {
         "Pregunta por requisitos para registrarse en programas distritales.",
         "Requiere claridad sobre cronograma de convocatorias.",
       ],
+      peticionOriginal: `Yo, Viviana Restrepo, solicito información sobre incentivos para turismo comunitario en corregimientos.
+
+    Solicito requisitos de inscripción, criterios de selección y cronograma de convocatorias para iniciativas locales de rutas turísticas.`,
       borradorRespuesta: `Estimada Viviana,\n\nEnviaremos a su correo la información de incentivos y requisitos para iniciativas de turismo comunitario en corregimientos.\n\nCordialmente,\nEquipo de Atención PQRSD`,
       documentoPaginas: 5,
     },
@@ -228,6 +249,9 @@ function buildMockPqrsds() {
         "Solicita visita técnica para validación de cultivo.",
         "Pide priorización por afectaciones de producción.",
       ],
+      peticionOriginal: `Yo, Hernán Darío Álvarez, presento queja por la falta de respuesta a mi solicitud de asistencia técnica rural.
+
+    Debido a afectaciones en mi cultivo, solicito priorización del caso y programación de visita técnica en el menor tiempo posible.`,
       borradorRespuesta: `Apreciado Hernán Darío,\n\nLamentamos la demora en la respuesta. Priorizaremos su caso y coordinaremos atención técnica en el menor tiempo posible.\n\nAtentamente,\nEquipo de Atención PQRSD`,
       documentoPaginas: 8,
     },
@@ -248,6 +272,9 @@ function buildMockPqrsds() {
         "Solicita información sobre costos de inscripción.",
         "Consulta si hay cupos para emprendimientos gastronómicos.",
       ],
+      peticionOriginal: `Yo, Natalia Ospina, solicito información para participar como expositora en la próxima feria empresarial local.
+
+    Solicito confirmar fechas, requisitos, costos de inscripción y disponibilidad de cupos para emprendimientos gastronómicos.`,
       borradorRespuesta: `Estimada Natalia,\n\nLe compartiremos el cronograma de ferias y los requisitos de participación para expositores de emprendimientos locales.\n\nAtentamente,\nEquipo de Atención PQRSD`,
       documentoPaginas: 4,
     },
@@ -269,13 +296,14 @@ function buildMockPqrsds() {
         "Pregunta por modalidad virtual y presencial.",
         "Requiere confirmar disponibilidad de cupos.",
       ],
+      peticionOriginal: `Yo, Santiago Muñoz, solicito orientación sobre el proceso de inscripción a talleres de transformación digital.
+
+Solicito el paso a paso, modalidades disponibles (virtual y presencial), requisitos y confirmación de cupos para la próxima cohorte.`,
       borradorRespuesta: `Estimado Santiago,\n\nLe enviaremos el enlace de inscripción y la oferta vigente de talleres de transformación digital con sus modalidades disponibles.\n\nCordialmente,\nEquipo de Atención PQRSD`,
       documentoPaginas: 5,
     },
   ];
 }
-
-const LOREM_ORIGINAL = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor. Cras elementum ultrices diam. Maecenas ligula massa, varius a, semper congue, euismod non, mi. Proin porttitor, orci nec nonummy molestie, enim est eleifend mi, non fermentum diam nisl sit amet erat. Duis semper. Duis arcu massa, scelerisque vitae, consequat in, pretium a, enim. Pellentesque congue. Ut in risus volutpat libero pharetra tempor. Cras vestibulum bibendum augue. Praesent egestas leo in pede. Praesent blandit odio eu enim. Pellentesque sed dui ut augue blandit sodales. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Aliquam nibh. Mauris ac mauris sed pede pellentesque fermentum. Maecenas adipiscing ante non diam.`;
 
 /** Logo horizontal (escudo + tipografía) para navbar */
 function LogoAlcaldiaNavbar({ className = "" }) {
@@ -401,7 +429,7 @@ function LoginView({ onLogin }) {
               onClick={() => onLogin()}
               className="w-full rounded-full bg-[#A7D9ED] px-8 py-3 text-sm font-bold uppercase tracking-wide text-gray-900 shadow-sm transition hover:bg-[#93C5FD] focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2"
             >
-              INGRESA
+              INGRESAR
             </button>
           </div>
         </div>
@@ -543,7 +571,7 @@ function DashboardView({ items, viewMode, onViewModeChange, onSelect, onLogout }
   );
 }
 
-function AccordionDocumento({ paginas }) {
+function AccordionDocumento({ paginas, peticionOriginal }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
@@ -553,9 +581,7 @@ function AccordionDocumento({ paginas }) {
         className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm font-medium text-gray-800 transition hover:bg-gray-50"
         aria-expanded={open}
       >
-        <span>
-          Ver documento original ({paginas} páginas)
-        </span>
+        <span>Ver petición original</span>
         {open ? (
           <ChevronUp className="h-5 w-5 shrink-0 text-gray-500" />
         ) : (
@@ -564,8 +590,7 @@ function AccordionDocumento({ paginas }) {
       </button>
       {open && (
         <div className="border-t border-gray-100 bg-gray-50/50 px-4 py-4 text-sm leading-relaxed text-gray-700">
-          <p>{LOREM_ORIGINAL}</p>
-          <p className="mt-4">{LOREM_ORIGINAL}</p>
+          <p className="whitespace-pre-line">{peticionOriginal}</p>
         </div>
       )}
     </div>
@@ -576,6 +601,8 @@ function DetailView({ item, onBack, onReassign, onResolve }) {
   const dias = daysUntilDeadline(item.createdAt, item.tipo);
   const isResuelto = Boolean(item.resuelto);
   const [showReassignSlider, setShowReassignSlider] = useState(false);
+  const [isEditingDraft, setIsEditingDraft] = useState(false);
+  const [draftText, setDraftText] = useState(item.borradorRespuesta);
   const [reassignIndex, setReassignIndex] = useState(() => {
     const found = REASIGNACION_OPCIONES.indexOf(item.dependenciaSugerida);
     return found >= 0 ? found : 0;
@@ -586,6 +613,11 @@ function DetailView({ item, onBack, onReassign, onResolve }) {
     setReassignIndex(found >= 0 ? found : 0);
     setShowReassignSlider(false);
   }, [item.id, item.dependenciaSugerida]);
+
+  useEffect(() => {
+    setDraftText(item.borradorRespuesta);
+    setIsEditingDraft(false);
+  }, [item.id, item.borradorRespuesta]);
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
@@ -670,22 +702,37 @@ function DetailView({ item, onBack, onReassign, onResolve }) {
           </section>
 
           <section className="mt-6">
-            <AccordionDocumento paginas={item.documentoPaginas} />
+            <AccordionDocumento
+              paginas={item.documentoPaginas}
+              peticionOriginal={item.peticionOriginal}
+            />
           </section>
 
           <section className="mt-6">
-            <label
-              htmlFor="borrador"
-              className="block text-sm font-semibold text-gray-900"
-            >
-              Borrador sugerido (Requiere revisión humana)
-            </label>
+            <div className="flex items-center justify-between gap-3">
+              <label
+                htmlFor="borrador"
+                className="block text-sm font-semibold text-gray-900"
+              >
+                Borrador sugerido (Requiere revisión humana)
+              </label>
+              <button
+                type="button"
+                onClick={() => setIsEditingDraft((v) => !v)}
+                className="rounded-full border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"
+              >
+                Editar
+              </button>
+            </div>
             <textarea
               id="borrador"
               rows={10}
-              readOnly
-              className="mt-2 w-full resize-y rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-3 text-sm text-gray-800 outline-none ring-[#DDF0F8] focus:border-sky-300 focus:ring-2"
-              defaultValue={item.borradorRespuesta}
+              readOnly={!isEditingDraft}
+              value={draftText}
+              onChange={(e) => setDraftText(e.target.value)}
+              className={`mt-2 w-full resize-y rounded-xl border px-4 py-3 text-sm text-gray-800 outline-none ring-[#DDF0F8] focus:border-sky-300 focus:ring-2 ${
+                isEditingDraft ? "border-sky-300 bg-white" : "border-gray-200 bg-gray-50/80"
+              }`}
             />
           </section>
 
