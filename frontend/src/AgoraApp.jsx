@@ -19,11 +19,18 @@ const SLA_BY_TIPO = {
 };
 
 const MS_PER_DAY = 86_400_000;
-const REASIGNACION_OPCIONES = [
+const DEFAULT_REASIGNACION_OPCIONES = [
   "Subsecretaría de creación y fortalecimiento empresarial",
   "Subsecretaría de desarrollo rural",
   "Subsecretaría de turismo",
 ];
+const SECRETARIA_FIJA = "Secretaria de desarrollo economico";
+const PENDIENTES_ENDPOINT_URL = "https://notificationagorapp-1.onrender.com/qprs/por-secretaria";
+const DETALLE_ENDPOINT_BASE_URL = "https://notificationagorapp-1.onrender.com/qprs";
+const SECRETARIAS_ENDPOINT_URL = "https://notificationagorapp-1.onrender.com/secretarias";
+const ACTUALIZAR_SECRETARIA_ENDPOINT_URL =
+  "https://notificationagorapp-1.onrender.com/qprs/actualizar-secretaria";
+const RESOLVER_PQRS_ENDPOINT_BASE_URL = "https://notificationagorapp-1.onrender.com/qprs";
 
 function addCalendarDays(date, days) {
   const d = new Date(date);
@@ -58,6 +65,189 @@ function formatDate(d) {
     month: "short",
     year: "numeric",
   }).format(d);
+}
+
+function normalizePqrsFromApi(raw, idx) {
+  const createdAtValue =
+    raw?.createdAt ??
+    raw?.fechaCreacion ??
+    raw?.fechaUtc ??
+    raw?.fechatutc ??
+    raw?.fechaRegistro ??
+    new Date();
+  const createdAt = new Date(createdAtValue);
+
+  const resumenFuente =
+    raw?.resumen ?? raw?.resumenIA ?? raw?.resumenIa ?? raw?.pqrs ?? "";
+
+  const borradorFuente =
+    raw?.borradorRespuesta ??
+    raw?.respuestaSugerida ??
+    raw?.irrespuesta ??
+    raw?.respuesta ??
+    "";
+
+  const peticionOriginalFuente =
+    raw?.peticionOriginal ?? raw?.descripcion ?? raw?.pqrs ?? "Sin petición original disponible";
+
+  const tipoFuente = String(raw?.tipo ?? raw?.clasificacion ?? "Información").trim();
+  const tipoNormalizado = tipoFuente
+    ? `${tipoFuente.charAt(0).toUpperCase()}${tipoFuente.slice(1).toLowerCase()}`
+    : "Información";
+
+  return {
+    id: raw?.id ?? raw?.radicado ?? `PQR-API-${idx + 1}`,
+    tituloIa:
+      raw?.tituloIa ??
+      raw?.tituloIA ??
+      raw?.titulo ??
+      raw?.asunto ??
+      "Petición recibida",
+    tipo: tipoNormalizado,
+    createdAt: Number.isNaN(createdAt.getTime()) ? new Date() : createdAt,
+    ciudadano: {
+      nombre:
+        raw?.ciudadano?.nombre ??
+        raw?.nombreCiudadano ??
+        raw?.nombre ??
+        raw?.implicado ??
+        "Sin nombre",
+      documento:
+        raw?.ciudadano?.documento ??
+        raw?.documentoCiudadano ??
+        raw?.username ??
+        raw?.documento ??
+        "Sin documento",
+      email: raw?.ciudadano?.email ?? raw?.correoCiudadano ?? raw?.email ?? "",
+      telefono: raw?.ciudadano?.telefono ?? raw?.telefonoCiudadano ?? raw?.telefono ?? "",
+    },
+    dependenciaSugerida:
+      raw?.dependenciaSugerida ?? raw?.dependencia ?? raw?.secretaria ?? "Sin dependencia",
+    resumenBullets: Array.isArray(raw?.resumenBullets)
+      ? raw.resumenBullets
+      : [resumenFuente || "Sin resumen disponible"],
+    peticionOriginal: peticionOriginalFuente,
+    borradorRespuesta: borradorFuente,
+    documentoPaginas:
+      raw?.documentoPaginas ?? raw?.paginasDocumento ?? 1,
+    reasignado: Boolean(raw?.reasignado),
+    resuelto: Boolean(raw?.resuelto),
+    resueltoAt: raw?.resueltoAt ? new Date(raw.resueltoAt) : undefined,
+  };
+}
+
+async function fetchPendientesPorSecretaria() {
+  if (PENDIENTES_ENDPOINT_URL.includes("REEMPLAZAR_ENDPOINT")) {
+    return buildMockPqrsds();
+  }
+
+  const url = new URL(PENDIENTES_ENDPOINT_URL);
+  url.searchParams.set("secretaria", SECRETARIA_FIJA);
+  const res = await fetch(url.toString(), { method: "GET" });
+
+  if (!res.ok) {
+    throw new Error("No fue posible cargar las PQRs pendientes.");
+  }
+
+  const body = await res.json();
+  const list = Array.isArray(body)
+    ? body
+    : Array.isArray(body?.data)
+      ? body.data
+      : Array.isArray(body?.items)
+        ? body.items
+        : [];
+
+  return list.map(normalizePqrsFromApi);
+}
+
+async function fetchDetallePqrsById(id) {
+  if (!id) {
+    return null;
+  }
+
+  const detalleUrl = `${DETALLE_ENDPOINT_BASE_URL}/${encodeURIComponent(id)}`;
+  const res = await fetch(detalleUrl, { method: "GET" });
+
+  if (!res.ok) {
+    throw new Error("No fue posible cargar el detalle de la petición.");
+  }
+
+  const body = await res.json();
+  const payload = body?.data ?? body?.item ?? body;
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+
+  return normalizePqrsFromApi(payload, 0);
+}
+
+async function fetchSecretarias() {
+  const res = await fetch(SECRETARIAS_ENDPOINT_URL, { method: "GET" });
+  if (!res.ok) {
+    throw new Error("No fue posible cargar las secretarías.");
+  }
+
+  const body = await res.json();
+  const list = Array.isArray(body)
+    ? body
+    : Array.isArray(body?.data)
+      ? body.data
+      : Array.isArray(body?.items)
+        ? body.items
+        : [];
+
+  const names = list
+    .map((item) => {
+      if (typeof item === "string") return item.trim();
+      return String(
+        item?.nombreDependencia ??
+          item?.nombre ??
+          item?.secretaria ??
+          item?.name ??
+          ""
+      ).trim();
+    })
+    .filter(Boolean);
+
+  return [...new Set(names)];
+}
+
+async function actualizarSecretariaPqrs(numeroPeticion, secretaria) {
+  if (!numeroPeticion || !secretaria) {
+    throw new Error("Faltan datos para reasignar la petición.");
+  }
+
+  const payload = {
+    numeroPeticion,
+    radicado: numeroPeticion,
+    secretaria,
+  };
+
+  const res = await fetch(ACTUALIZAR_SECRETARIA_ENDPOINT_URL, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error("No fue posible actualizar la secretaría de la petición.");
+  }
+}
+
+async function resolverPqrs(numeroPeticion) {
+  if (!numeroPeticion) {
+    throw new Error("Falta el número de petición para resolver.");
+  }
+
+  const url = `${RESOLVER_PQRS_ENDPOINT_BASE_URL}/${encodeURIComponent(numeroPeticion)}/resolver`;
+  const res = await fetch(url, { method: "PATCH" });
+
+  if (!res.ok) {
+    throw new Error("No fue posible actualizar la petición como resuelta.");
+  }
 }
 
 /** Mock: fechas relativas a “hoy” para que la tabla muestre alertas y plazos coherentes */
@@ -597,22 +787,28 @@ function AccordionDocumento({ paginas, peticionOriginal }) {
   );
 }
 
-function DetailView({ item, onBack, onReassign, onResolve }) {
+function DetailView({ item, secretariasOpciones, onBack, onReassign, onResolve }) {
   const dias = daysUntilDeadline(item.createdAt, item.tipo);
   const isResuelto = Boolean(item.resuelto);
+  const options =
+    Array.isArray(secretariasOpciones) && secretariasOpciones.length > 0
+      ? secretariasOpciones
+      : DEFAULT_REASIGNACION_OPCIONES;
   const [showReassignSlider, setShowReassignSlider] = useState(false);
   const [isEditingDraft, setIsEditingDraft] = useState(false);
+  const [isReassigning, setIsReassigning] = useState(false);
+  const [isResolving, setIsResolving] = useState(false);
   const [draftText, setDraftText] = useState(item.borradorRespuesta);
   const [reassignIndex, setReassignIndex] = useState(() => {
-    const found = REASIGNACION_OPCIONES.indexOf(item.dependenciaSugerida);
+    const found = options.indexOf(item.dependenciaSugerida);
     return found >= 0 ? found : 0;
   });
 
   useEffect(() => {
-    const found = REASIGNACION_OPCIONES.indexOf(item.dependenciaSugerida);
+    const found = options.indexOf(item.dependenciaSugerida);
     setReassignIndex(found >= 0 ? found : 0);
     setShowReassignSlider(false);
-  }, [item.id, item.dependenciaSugerida]);
+  }, [item.id, item.dependenciaSugerida, options]);
 
   useEffect(() => {
     setDraftText(item.borradorRespuesta);
@@ -752,10 +948,18 @@ function DetailView({ item, onBack, onReassign, onResolve }) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => onResolve()}
+                  onClick={async () => {
+                    setIsResolving(true);
+                    try {
+                      await onResolve();
+                    } finally {
+                      setIsResolving(false);
+                    }
+                  }}
+                  disabled={isResolving}
                   className="rounded-full bg-[#DDF0F8] px-6 py-2.5 text-sm font-semibold text-gray-900 shadow-sm transition hover:bg-[#c9e6f5] focus:outline-none focus:ring-2 focus:ring-sky-300 focus:ring-offset-2"
                 >
-                  Aprobar y Enviar
+                  {isResolving ? "Aprobando..." : "Aprobar"}
                 </button>
               </>
             )}
@@ -784,7 +988,7 @@ function DetailView({ item, onBack, onReassign, onResolve }) {
                   className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-200"
                   aria-label="Seleccionar dependencia para reasignar"
                 >
-                  {REASIGNACION_OPCIONES.map((opcion, idx) => (
+                  {options.map((opcion, idx) => (
                     <option key={opcion} value={idx}>
                       {opcion}
                     </option>
@@ -792,7 +996,7 @@ function DetailView({ item, onBack, onReassign, onResolve }) {
                 </select>
                 <div className="mt-3 rounded-lg border border-sky-100 bg-white px-3 py-2 text-sm text-gray-800">
                   <span className="font-semibold">Seleccionada:</span>{" "}
-                  {REASIGNACION_OPCIONES[reassignIndex]}
+                  {options[reassignIndex]}
                 </div>
               </div>
 
@@ -800,16 +1004,25 @@ function DetailView({ item, onBack, onReassign, onResolve }) {
                 <button
                   type="button"
                   onClick={() => setShowReassignSlider(false)}
+                  disabled={isReassigning}
                   className="rounded-full border border-gray-300 bg-white px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
                 >
                   Cancelar
                 </button>
                 <button
                   type="button"
-                  onClick={() => onReassign(REASIGNACION_OPCIONES[reassignIndex])}
+                  onClick={async () => {
+                    setIsReassigning(true);
+                    try {
+                      await onReassign(options[reassignIndex]);
+                    } finally {
+                      setIsReassigning(false);
+                    }
+                  }}
+                  disabled={isReassigning}
                   className="rounded-full bg-[#DDF0F8] px-4 py-2 text-xs font-semibold text-gray-900 hover:bg-[#c9e6f5]"
                 >
-                  Reasignar y volver
+                  {isReassigning ? "Reasignando..." : "Reasignar y volver"}
                 </button>
               </div>
             </section>
@@ -824,7 +1037,11 @@ export default function AgoraApp() {
   const [vista, setVista] = useState("login");
   const [bandejaActiva, setBandejaActiva] = useState("pendientes");
   const [seleccionId, setSeleccionId] = useState(null);
-  const [pqrsds, setPqrsds] = useState(() => buildMockPqrsds());
+  const [detalleLoading, setDetalleLoading] = useState(false);
+  const [pqrsds, setPqrsds] = useState([]);
+  const [secretariasOpciones, setSecretariasOpciones] = useState(
+    DEFAULT_REASIGNACION_OPCIONES
+  );
   const ticketsPendientes = useMemo(
     () => pqrsds.filter((p) => !p.reasignado && !p.resuelto),
     [pqrsds]
@@ -837,6 +1054,70 @@ export default function AgoraApp() {
     () => pqrsds.find((p) => p.id === seleccionId) ?? null,
     [pqrsds, seleccionId]
   );
+
+  useEffect(() => {
+    if (vista !== "dashboard" || bandejaActiva !== "pendientes") return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const pendientes = await fetchPendientesPorSecretaria();
+        if (cancelled) return;
+        setPqrsds((prev) => {
+          const resueltos = prev.filter((p) => p.resuelto);
+          return [...pendientes, ...resueltos];
+        });
+      } catch (err) {
+        console.error("Error cargando pendientes:", err);
+        if (cancelled) return;
+        setPqrsds((prev) => prev.filter((p) => p.resuelto));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [vista, bandejaActiva]);
+
+  useEffect(() => {
+    if (vista === "login") return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const secretarias = await fetchSecretarias();
+        if (cancelled || secretarias.length === 0) return;
+        setSecretariasOpciones(secretarias);
+      } catch (err) {
+        console.error("Error cargando secretarías:", err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [vista]);
+
+  const handleSelectTicket = async (id) => {
+    setDetalleLoading(true);
+    try {
+      const detalle = await fetchDetallePqrsById(id);
+      if (detalle) {
+        setPqrsds((prev) => {
+          const updated = prev.map((p) =>
+            p.id === id ? { ...p, ...detalle, id: p.id } : p
+          );
+          return updated.some((p) => p.id === id) ? updated : [...prev, detalle];
+        });
+      }
+    } catch (err) {
+      console.error("Error cargando detalle por id:", err);
+    } finally {
+      setSeleccionId(id);
+      setVista("detalle");
+      setDetalleLoading(false);
+    }
+  };
 
   if (vista === "login") {
     return (
@@ -853,34 +1134,62 @@ export default function AgoraApp() {
     return (
       <DetailView
         item={seleccion}
+        secretariasOpciones={secretariasOpciones}
         onBack={() => {
           setVista("dashboard");
           setSeleccionId(null);
         }}
         onReassign={(dependencia) => {
-          setPqrsds((prev) =>
-            prev.map((p) =>
-              p.id === seleccion.id
-                ? { ...p, dependenciaSugerida: dependencia, reasignado: true }
-                : p
-            )
-          );
-          setVista("dashboard");
-          setSeleccionId(null);
+          return (async () => {
+            try {
+              await actualizarSecretariaPqrs(seleccion.id, dependencia);
+              setPqrsds((prev) =>
+                prev.map((p) =>
+                  p.id === seleccion.id
+                    ? { ...p, dependenciaSugerida: dependencia, reasignado: true }
+                    : p
+                )
+              );
+              setVista("dashboard");
+              setSeleccionId(null);
+            } catch (err) {
+              console.error("Error actualizando secretaría:", err);
+              alert("No fue posible reasignar la petición en este momento.");
+            }
+          })();
         }}
         onResolve={() => {
-          setPqrsds((prev) =>
-            prev.map((p) =>
-              p.id === seleccion.id
-                ? { ...p, resuelto: true, resueltoAt: new Date() }
-                : p
-            )
-          );
-          setBandejaActiva("historico");
-          setVista("dashboard");
-          setSeleccionId(null);
+          return (async () => {
+            try {
+              await resolverPqrs(seleccion.id);
+              setPqrsds((prev) =>
+                prev.map((p) =>
+                  p.id === seleccion.id
+                    ? { ...p, resuelto: true, resueltoAt: new Date() }
+                    : p
+                )
+              );
+              setBandejaActiva("historico");
+              setVista("dashboard");
+              setSeleccionId(null);
+            } catch (err) {
+              console.error("Error resolviendo petición:", err);
+              alert("No fue posible aprobar la petición en este momento.");
+            }
+          })();
         }}
       />
+    );
+  }
+
+  if (vista === "detalle" && detalleLoading) {
+    return (
+      <div className="flex min-h-screen flex-col bg-gray-50">
+        <AppNavbar />
+        <div className="mx-auto flex w-full max-w-3xl flex-1 items-center justify-center px-4 py-8 text-sm text-gray-600 sm:px-6 lg:px-8">
+          Cargando detalle de la petición...
+        </div>
+      </div>
     );
   }
 
@@ -889,10 +1198,7 @@ export default function AgoraApp() {
       items={bandejaActiva === "pendientes" ? ticketsPendientes : ticketsResueltos}
       viewMode={bandejaActiva}
       onViewModeChange={setBandejaActiva}
-      onSelect={(id) => {
-        setSeleccionId(id);
-        setVista("detalle");
-      }}
+      onSelect={handleSelectTicket}
       onLogout={() => {
         setSeleccionId(null);
         setVista("login");
