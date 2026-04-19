@@ -48,7 +48,7 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**", "/h2-console/**", "/error").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/secure/me").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/secure/me", "/api/pqrsds").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

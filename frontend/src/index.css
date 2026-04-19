@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --agora-surface: #ddf0f8;
+  --agora-accent: #ff8c00;
+  --agora-cta: #a7d9ed;
+}
+
 body {
   @apply font-sans antialiased text-gray-800;
 }

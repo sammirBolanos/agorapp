@@ -5,16 +5,12 @@ export default {
     extend: {
       fontFamily: {
         sans: [
-          "Inter",
+          '"IBM Plex Sans"',
           "ui-sans-serif",
           "system-ui",
-          "-apple-system",
-          "Segoe UI",
-          "Roboto",
-          "Helvetica Neue",
-          "Arial",
           "sans-serif",
         ],
+        serif: ['"IBM Plex Serif"', "ui-serif", "Georgia", "serif"],
       },
     },
   },

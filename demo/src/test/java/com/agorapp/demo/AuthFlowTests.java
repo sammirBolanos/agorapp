@@ -20,25 +20,25 @@ import org.springframework.test.web.servlet.MvcResult;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@TestPropertySource(properties = {
-        "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-        "spring.datasource.driver-class-name=org.h2.Driver",
-        "spring.datasource.username=sa",
-        "spring.datasource.password=",
-        "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect",
-        "security.jwt.secret=0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF"
-})
+@TestPropertySource(
+        properties = {
+                "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+                "spring.datasource.driver-class-name=org.h2.Driver",
+                "spring.datasource.username=sa",
+                "spring.datasource.password=",
+                "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect",
+                "security.jwt.secret=0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF",
+        })
 class AuthFlowTests {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     void registerLoginAndAccessSecureEndpoint() throws Exception {
-        Map<String, String> payload = Map.of("username", "alice", "password", "Secret123");
+        Map<String, String> payload = Map.of("username", "bob", "password", "Secret123");
         String body = objectMapper.writeValueAsString(payload);
 
         mockMvc.perform(post("/auth/register")
@@ -59,6 +59,11 @@ class AuthFlowTests {
         mockMvc.perform(get("/api/secure/me")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("alice"));
+                .andExpect(jsonPath("$.username").value("bob"));
+
+        mockMvc.perform(get("/api/pqrsds").header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value("PQR-001"))
+                .andExpect(jsonPath("$[0].tipo").value("Información"));
     }
 }

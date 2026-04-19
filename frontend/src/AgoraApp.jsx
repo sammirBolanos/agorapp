@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -7,6 +7,15 @@ import {
   ChevronUp,
   Eye,
 } from "lucide-react";
+import {
+  clearStoredToken,
+  fetchMe,
+  fetchPqrsds,
+  getStoredToken,
+  login as apiLogin,
+  normalizePqrsdItem,
+  setStoredToken,
+} from "./api.js";
 
 const ALT_ALCALDIA =
   "Logo Alcaldía de Medellín — Distrito de Ciencia, Tecnología e Innovación";
@@ -48,125 +57,13 @@ function formatDate(d) {
   }).format(d);
 }
 
-/** Mock: fechas relativas a “hoy” para que la tabla muestre alertas y plazos coherentes */
-function buildMockPqrsds() {
-  const now = new Date();
-  return [
-    {
-      id: "PQR-001",
-      tituloIa:
-        "Solicitud de información sobre trámite de licencia de funcionamiento en comuna 10.",
-      tipo: "Información",
-      createdAt: addCalendarDays(now, -8),
-      ciudadano: {
-        nombre: "María Fernanda López",
-        documento: "CC 43.521.901",
-        email: "m.lopez@correo.com",
-        telefono: "+57 300 555 1200",
-      },
-      dependenciaSugerida: "Secretaría de Desarrollo Económico",
-      resumenBullets: [
-        "La ciudadana solicita plazos y requisitos actualizados para licencia de funcionamiento.",
-        "Menciona un local en Laureles y actividad de servicios gastronómicos.",
-        "Pide orientación sobre inspección sanitaria y documentos en línea.",
-      ],
-      borradorRespuesta: `Estimada María Fernanda,\n\nDe acuerdo con su petición, le informamos que el trámite de licencia de funcionamiento puede iniciarse a través del portal de trámites de la Alcaldía de Medellín. Los requisitos generales incluyen certificado de uso del suelo, RUT actualizado y cumplimiento de normativa sectorial.\n\nPara su caso específico en Laureles, le sugerimos agendar una orientación con la línea de atención de Desarrollo Económico.\n\nCordial saludo,\nEquipo de Atención PQRSD`,
-      documentoPaginas: 7,
-    },
-    {
-      id: "PQR-002",
-      tituloIa:
-        "Queja por demora en respuesta a solicitud de subsidio a mipymes.",
-      tipo: "Quejas",
-      createdAt: addCalendarDays(now, -5),
-      ciudadano: {
-        nombre: "Carlos Andrés Vélez",
-        documento: "CC 71.902.334",
-        email: "cavelez@empresa.co",
-        telefono: "+57 604 444 8899",
-      },
-      dependenciaSugerida: "Agencia de Cooperación e Inversión de Medellín (ACI)",
-      resumenBullets: [
-        "El peticionario indica que lleva más de 20 días sin respuesta formal.",
-        "Adjunta radicado y comprobante de envío de soportes.",
-        "Solicita estado del trámite y fecha estimada de respuesta.",
-      ],
-      borradorRespuesta: `Apreciado Carlos Andrés,\n\nHemos registrado su queja y verificaremos el estado del radicado en el sistema de gestión. En un plazo máximo de cinco (5) días hábiles le remitiremos el avance correspondiente y, de ser necesario, las acciones correctivas aplicables.\n\nAgradecemos la información suministrada.\n\nAtentamente,\nEquipo de Atención PQRSD`,
-      documentoPaginas: 7,
-    },
-    {
-      id: "PQR-003",
-      tituloIa:
-        "Consulta sobre convocatoria de innovación abierta y criterios de elegibilidad.",
-      tipo: "Consultas",
-      createdAt: addCalendarDays(now, -28),
-      ciudadano: {
-        nombre: "Laura Catalina Mejía",
-        documento: "CC 1.045.882.001",
-        email: "lmejia.innova@gmail.com",
-        telefono: "+57 311 222 6677",
-      },
-      dependenciaSugerida: "Secretaría de Innovación Digital",
-      resumenBullets: [
-        "Interés en participar con una startup de software civic tech.",
-        "Pregunta por requisitos de constitución y antigüedad mínima.",
-        "Consulta si aplica para equipos interdisciplinarios.",
-      ],
-      borradorRespuesta: `Estimada Laura Catalina,\n\nLe confirmamos que la convocatoria vigente publica los criterios de elegibilidad en el anexo técnico. En líneas generales, se requiere personería jurídica o natural con RUT y cumplimiento de requisitos de experiencia indicados por línea estratégica.\n\nPuede remitir dudas puntuales sobre su caso y adjuntar una breve ficha del equipo.\n\nSaludos cordiales,\nEquipo de Atención PQRSD`,
-      documentoPaginas: 7,
-    },
-    {
-      id: "PQR-004",
-      tituloIa:
-        "Información sobre horarios y sede para radicación presencial de PQRSD.",
-      tipo: "Información",
-      createdAt: addCalendarDays(now, -1),
-      ciudadano: {
-        nombre: "Diego León Arango",
-        documento: "CC 98.765.432",
-        email: "d.leon@outlook.com",
-        telefono: "+57 300 888 4411",
-      },
-      dependenciaSugerida: "Secretaría de Despacho",
-      resumenBullets: [
-        "Consulta por ventanilla única y documentación mínima para radicar.",
-        "Pregunta si requiere cita previa.",
-        "Solicita confirmación de canales digitales alternativos.",
-      ],
-      borradorRespuesta: `Apreciado Diego,\n\nLa radicación de PQRSD está disponible de manera digital las 24 horas. Para atención presencial, puede consultar el calendario y sedes habilitadas en la página institucional; algunos servicios requieren agendamiento.\n\nQuedamos atentos a cualquier inquietud adicional.\n\nCordial saludo,\nEquipo de Atención PQRSD`,
-      documentoPaginas: 7,
-    },
-    {
-      id: "PQR-005",
-      tituloIa:
-        "Queja por inconsistencia en respuesta a reclamo previo sobre facturación de servicio.",
-      tipo: "Quejas",
-      createdAt: addCalendarDays(now, -12),
-      ciudadano: {
-        nombre: "Ana Patricia Gómez",
-        documento: "CC 35.198.765",
-        email: "ana.gomez@correo.net",
-        telefono: "+57 604 321 9900",
-      },
-      dependenciaSugerida: "Contraloría Delegada",
-      resumenBullets: [
-        "La peticionaria señala contradicción entre dos comunicaciones oficiales.",
-        "Solicita revisión por parte de un supervisor.",
-        "Adjunta historial de mensajes y radicados.",
-      ],
-      borradorRespuesta: `Estimada Ana Patricia,\n\nHemos recibido su queja y activaremos la revisión interna correspondiente. Le informaremos el número de seguimiento y los pasos siguientes dentro del término legal aplicable.\n\nGracias por ayudarnos a mejorar el servicio.\n\nAtentamente,\nEquipo de Atención PQRSD`,
-      documentoPaginas: 7,
-    },
-  ];
-}
-
 const LOREM_ORIGINAL = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor. Cras elementum ultrices diam. Maecenas ligula massa, varius a, semper congue, euismod non, mi. Proin porttitor, orci nec nonummy molestie, enim est eleifend mi, non fermentum diam nisl sit amet erat. Duis semper. Duis arcu massa, scelerisque vitae, consequat in, pretium a, enim. Pellentesque congue. Ut in risus volutpat libero pharetra tempor. Cras vestibulum bibendum augue. Praesent egestas leo in pede. Praesent blandit odio eu enim. Pellentesque sed dui ut augue blandit sodales. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Aliquam nibh. Mauris ac mauris sed pede pellentesque fermentum. Maecenas adipiscing ante non diam.`;
 
 /** Logo horizontal (escudo + tipografía) para navbar */
 function LogoAlcaldiaNavbar({ className = "" }) {
   return (
     <img
-      src="/logo-alcaldia-horizontal.png"
+      src="/alcaldia-1024x369.png"
       alt={ALT_ALCALDIA}
       className={`h-10 w-auto max-w-[min(100%,220px)] object-contain object-left sm:h-11 sm:max-w-[min(100%,320px)] md:max-w-none ${className}`}
     />
@@ -184,15 +81,28 @@ function LogoAlcaldiaLogin({ className = "" }) {
   );
 }
 
+function SkipToContent() {
+  return (
+    <a
+      href="#contenido-principal"
+      className="absolute left-[-9999px] top-2 z-[100] w-px overflow-hidden whitespace-nowrap rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-md ring-2 ring-sky-400 focus:left-4 focus:top-4 focus:h-auto focus:w-auto focus:overflow-visible focus:outline-none"
+    >
+      Saltar al contenido
+    </a>
+  );
+}
+
 function AppNavbar() {
   return (
-    <header className="border-b border-gray-200/80 bg-[#DDF0F8]">
+    <header className="border-b border-gray-200/80 bg-[var(--agora-surface)]">
       <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-3 px-4 py-3 sm:px-6 md:grid-cols-[1fr_auto_1fr] md:gap-4 lg:px-8">
         <div className="flex min-w-0 items-center md:justify-self-start">
           <LogoAlcaldiaNavbar />
         </div>
         <div className="flex flex-col items-center justify-center text-center md:justify-self-center">
-          <p className="text-base font-bold text-gray-900">Atención PQRSD</p>
+          <p className="font-serif text-base font-bold text-gray-900">
+            Atención PQRSD
+          </p>
           <p className="max-w-md text-xs text-gray-700 sm:text-sm">
             Peticiones, Quejas, Reclamos, Sugerencias, Denuncias
           </p>
@@ -207,7 +117,7 @@ function LimiteBadge({ diasRestantes }) {
   const urgente = diasRestantes <= 3;
   if (urgente) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-[#FF8C00] px-3 py-1 text-xs font-semibold text-white shadow-sm">
+      <span className="inline-flex items-center gap-1 rounded-full bg-[var(--agora-accent)] px-3 py-1 text-xs font-semibold text-white shadow-sm">
         <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
         {diasRestantes <= 0
           ? "Vencido"
@@ -230,27 +140,49 @@ function LimiteBadge({ diasRestantes }) {
   );
 }
 
-function LoginView({ onLogin }) {
+function LoginView({ onSubmit, submitting, error }) {
   const [usuario, setUsuario] = useState("");
   const [clave, setClave] = useState("");
+  const canSubmit =
+    usuario.trim().length >= 3 && clave.length >= 8 && !submitting;
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
-      <main className="flex flex-1 flex-col items-center justify-center px-4 py-10">
+    <div className="relative flex min-h-screen flex-col bg-white">
+      <SkipToContent />
+      <main
+        id="contenido-principal"
+        className="flex flex-1 flex-col items-center justify-center px-4 py-10"
+        tabIndex={-1}
+      >
         <div className="mb-8 flex flex-col items-center text-center">
           <LogoAlcaldiaLogin />
           <p className="mt-5 text-sm text-gray-700">
             Secretaría de Desarrollo Económico
           </p>
-          <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900">
+          <h1 className="mt-4 font-serif text-3xl font-bold tracking-tight text-gray-900">
             ÁgoraApp
           </h1>
         </div>
 
-        <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-lg ring-1 ring-gray-100">
-          <p className="mb-6 text-center text-sm font-medium text-[#FF8C00]">
+        <form
+          className="w-full max-w-md rounded-xl bg-white p-8 shadow-lg ring-1 ring-gray-100"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (canSubmit) onSubmit(usuario.trim(), clave);
+          }}
+        >
+          <p className="mb-6 text-center text-sm font-medium text-[var(--agora-accent)]">
             Ingresa tus datos para iniciar sesión
           </p>
+
+          {error ? (
+            <p
+              className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-center text-sm text-red-800"
+              role="alert"
+            >
+              {error}
+            </p>
+          ) : null}
 
           <div className="space-y-5">
             <div className="flex flex-col items-center">
@@ -266,7 +198,7 @@ function LoginView({ onLogin }) {
                 autoComplete="username"
                 value={usuario}
                 onChange={(e) => setUsuario(e.target.value)}
-                className="w-full max-w-sm rounded-full border border-gray-400 bg-white px-5 py-2.5 text-center text-sm text-gray-800 outline-none ring-[#DDF0F8] transition placeholder:text-gray-400 focus:border-sky-400 focus:ring-2"
+                className="w-full max-w-sm rounded-full border border-gray-400 bg-white px-5 py-2.5 text-center text-sm text-gray-800 outline-none ring-[var(--agora-surface)] transition placeholder:text-gray-400 focus:border-sky-400 focus:ring-2"
                 placeholder=""
               />
             </div>
@@ -283,29 +215,42 @@ function LoginView({ onLogin }) {
                 autoComplete="current-password"
                 value={clave}
                 onChange={(e) => setClave(e.target.value)}
-                className="w-full max-w-sm rounded-full border border-gray-400 bg-white px-5 py-2.5 text-center text-sm text-gray-800 outline-none ring-[#DDF0F8] transition focus:border-sky-400 focus:ring-2"
+                className="w-full max-w-sm rounded-full border border-gray-400 bg-white px-5 py-2.5 text-center text-sm text-gray-800 outline-none ring-[var(--agora-surface)] transition focus:border-sky-400 focus:ring-2"
               />
+              <p className="mt-2 max-w-sm text-center text-xs text-gray-500">
+                Mínimo 8 caracteres. Usuario demo por defecto:{" "}
+                <span className="font-mono text-gray-700">alice</span> /{" "}
+                <span className="font-mono text-gray-700">Secret123</span>
+              </p>
             </div>
           </div>
 
           <div className="mt-8">
             <button
-              type="button"
-              onClick={() => onLogin()}
-              className="w-full rounded-full bg-[#A7D9ED] px-8 py-3 text-sm font-bold uppercase tracking-wide text-gray-900 shadow-sm transition hover:bg-[#93C5FD] focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2"
+              type="submit"
+              disabled={!canSubmit}
+              className="w-full rounded-full bg-[var(--agora-cta)] px-8 py-3 text-sm font-bold uppercase tracking-wide text-gray-900 shadow-sm transition hover:bg-[#93C5FD] focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              INGRESA
+              {submitting ? "Ingresando…" : "INGRESA"}
             </button>
           </div>
-        </div>
+        </form>
       </main>
     </div>
   );
 }
 
-function DashboardView({ items, onSelect, onLogout }) {
+function DashboardView({
+  items,
+  loading,
+  loadError,
+  onRetry,
+  onSelect,
+  onLogout,
+}) {
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
+    <div className="relative flex min-h-screen flex-col bg-gray-50">
+      <SkipToContent />
       <AppNavbar />
       <div className="mx-auto flex w-full max-w-7xl items-center justify-end gap-2 px-4 py-2 sm:px-6 lg:px-8">
         <button
@@ -316,30 +261,88 @@ function DashboardView({ items, onSelect, onLogout }) {
           Cerrar sesión
         </button>
       </div>
-      <div className="flex-1 px-4 pb-10 pt-2 sm:px-6 lg:px-8">
+      <main
+        id="contenido-principal"
+        className="flex-1 px-4 pb-10 pt-2 sm:px-6 lg:px-8"
+        tabIndex={-1}
+        aria-busy={loading}
+      >
+        <h1 className="sr-only">Bandeja de peticiones PQRSD</h1>
+        {loadError ? (
+          <div
+            className="mx-auto mb-4 flex max-w-7xl flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between"
+            role="alert"
+          >
+            <span>{loadError}</span>
+            <button
+              type="button"
+              onClick={onRetry}
+              className="shrink-0 rounded-full border border-amber-300 bg-white px-4 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+            >
+              Reintentar
+            </button>
+          </div>
+        ) : null}
+        {loading ? (
+          <p className="mx-auto max-w-7xl py-6 text-center text-sm text-gray-600">
+            Cargando peticiones…
+          </p>
+        ) : null}
         <div className="mx-auto max-w-7xl overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-100">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-left text-sm">
+            <table
+              className="min-w-full divide-y divide-gray-200 text-left text-sm"
+              aria-label="Listado de peticiones PQRSD"
+            >
+              <caption className="sr-only">
+                Tabla con número de petición, título resumido por IA, plazo,
+                tipo y acción para ver detalle.
+              </caption>
               <thead className="bg-gray-50/80">
                 <tr>
-                  <th className="whitespace-nowrap px-4 py-3 font-semibold text-gray-800">
+                  <th
+                    scope="col"
+                    className="whitespace-nowrap px-4 py-3 font-semibold text-gray-800"
+                  >
                     N° Petición
                   </th>
-                  <th className="min-w-[200px] px-4 py-3 font-semibold text-gray-800">
+                  <th
+                    scope="col"
+                    className="min-w-[200px] px-4 py-3 font-semibold text-gray-800"
+                  >
                     Título Resumen IA
                   </th>
-                  <th className="whitespace-nowrap px-4 py-3 font-semibold text-gray-800">
+                  <th
+                    scope="col"
+                    className="whitespace-nowrap px-4 py-3 font-semibold text-gray-800"
+                  >
                     Límite de tiempo
                   </th>
-                  <th className="whitespace-nowrap px-4 py-3 font-semibold text-gray-800">
+                  <th
+                    scope="col"
+                    className="whitespace-nowrap px-4 py-3 font-semibold text-gray-800"
+                  >
                     Tipo
                   </th>
-                  <th className="whitespace-nowrap px-4 py-3 text-center font-semibold text-gray-800">
+                  <th
+                    scope="col"
+                    className="whitespace-nowrap px-4 py-3 text-center font-semibold text-gray-800"
+                  >
                     Acción
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white">
+                {!loading && items.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-4 py-8 text-center text-sm text-gray-600"
+                    >
+                      No hay peticiones para mostrar.
+                    </td>
+                  </tr>
+                ) : null}
                 {items.map((row) => {
                   const dias = daysUntilDeadline(row.createdAt, row.tipo);
                   return (
@@ -355,7 +358,7 @@ function DashboardView({ items, onSelect, onLogout }) {
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3">
-                        <span className="inline-flex items-center rounded-full bg-[#DDF0F8] px-2.5 py-0.5 text-xs font-medium text-gray-800 ring-1 ring-sky-100">
+                        <span className="inline-flex items-center rounded-full bg-[var(--agora-surface)] px-2.5 py-0.5 text-xs font-medium text-gray-800 ring-1 ring-sky-100">
                           {row.tipo}
                         </span>
                         <span className="mt-1 block text-xs text-gray-500">
@@ -366,11 +369,10 @@ function DashboardView({ items, onSelect, onLogout }) {
                         <button
                           type="button"
                           onClick={() => onSelect(row.id)}
-                          className="inline-flex items-center justify-center rounded-full p-2 text-gray-600 transition hover:bg-[#DDF0F8] hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-sky-300"
-                          title="Ver detalle"
+                          className="inline-flex items-center justify-center rounded-full p-2 text-gray-600 transition hover:bg-[var(--agora-surface)] hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-sky-300"
+                          aria-label={`Ver detalle de la petición ${row.id}`}
                         >
-                          <Eye className="h-5 w-5" />
-                          <span className="sr-only">Ver detalle</span>
+                          <Eye className="h-5 w-5" aria-hidden />
                         </button>
                       </td>
                     </tr>
@@ -380,20 +382,24 @@ function DashboardView({ items, onSelect, onLogout }) {
             </table>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
 
 function AccordionDocumento({ paginas }) {
   const [open, setOpen] = useState(false);
+  const panelId = useId();
+  const triggerId = useId();
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
       <button
         type="button"
+        id={triggerId}
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm font-medium text-gray-800 transition hover:bg-gray-50"
         aria-expanded={open}
+        aria-controls={panelId}
       >
         <span>
           Ver documento original ({paginas} páginas)
@@ -405,7 +411,13 @@ function AccordionDocumento({ paginas }) {
         )}
       </button>
       {open && (
-        <div className="border-t border-gray-100 bg-gray-50/50 px-4 py-4 text-sm leading-relaxed text-gray-700">
+        <div
+          id={panelId}
+          role="region"
+          aria-labelledby={triggerId}
+          className="border-t border-gray-100 bg-gray-50/50 px-4 py-4 text-sm leading-relaxed text-gray-700"
+          tabIndex={-1}
+        >
           <p>{LOREM_ORIGINAL}</p>
           <p className="mt-4">{LOREM_ORIGINAL}</p>
         </div>
@@ -418,7 +430,8 @@ function DetailView({ item, onBack }) {
   const dias = daysUntilDeadline(item.createdAt, item.tipo);
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
+    <div className="relative flex min-h-screen flex-col bg-gray-50">
+      <SkipToContent />
       <AppNavbar />
       <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-4 sm:px-6 lg:px-8">
         <button
@@ -430,10 +443,16 @@ function DetailView({ item, onBack }) {
           Volver
         </button>
 
-        <article className="rounded-xl bg-white p-6 shadow-md ring-1 ring-gray-100 sm:p-8">
+        <article
+          id="contenido-principal"
+          className="rounded-xl bg-white p-6 shadow-md ring-1 ring-gray-100 sm:p-8"
+          tabIndex={-1}
+        >
           <header className="border-b border-gray-100 pb-6">
-            <p className="text-sm font-semibold text-[#FF8C00]">{item.id}</p>
-            <h2 className="mt-1 text-xl font-bold text-gray-900">
+            <p className="text-sm font-semibold text-[var(--agora-accent)]">
+              {item.id}
+            </p>
+            <h2 className="mt-1 font-serif text-xl font-bold text-gray-900">
               {item.tituloIa}
             </h2>
             <p className="mt-2 text-xs text-gray-500">
@@ -448,8 +467,8 @@ function DetailView({ item, onBack }) {
                 Resumen Ejecutivo IA
               </h3>
               <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-gray-800">
-                {item.resumenBullets.map((b) => (
-                  <li key={b}>{b}</li>
+                {item.resumenBullets.map((b, i) => (
+                  <li key={`${item.id}-r-${i}`}>{b}</li>
                 ))}
               </ul>
             </div>
@@ -460,7 +479,7 @@ function DetailView({ item, onBack }) {
               <span className="font-semibold">
                 Dependencia sugerida por IA:
               </span>{" "}
-              <span className="ml-1 inline-flex items-center rounded-full bg-[#DDF0F8] px-3 py-1 text-xs font-medium text-gray-900 ring-1 ring-sky-100">
+              <span className="ml-1 inline-flex items-center rounded-full bg-[var(--agora-surface)] px-3 py-1 text-xs font-medium text-gray-900 ring-1 ring-sky-100">
                 <Building2 className="mr-1 h-3.5 w-3.5" aria-hidden />
                 {item.dependenciaSugerida}
               </span>
@@ -514,7 +533,7 @@ function DetailView({ item, onBack }) {
               id="borrador"
               rows={10}
               readOnly
-              className="mt-2 w-full resize-y rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-3 text-sm text-gray-800 outline-none ring-[#DDF0F8] focus:border-sky-300 focus:ring-2"
+              className="mt-2 w-full resize-y rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-3 text-sm text-gray-800 outline-none ring-[var(--agora-surface)] focus:border-sky-300 focus:ring-2"
               defaultValue={item.borradorRespuesta}
             />
           </section>
@@ -528,7 +547,7 @@ function DetailView({ item, onBack }) {
             </button>
             <button
               type="button"
-              className="rounded-full bg-[#DDF0F8] px-6 py-2.5 text-sm font-semibold text-gray-900 shadow-sm transition hover:bg-[#c9e6f5] focus:outline-none focus:ring-2 focus:ring-sky-300 focus:ring-offset-2"
+              className="rounded-full bg-[var(--agora-surface)] px-6 py-2.5 text-sm font-semibold text-gray-900 shadow-sm transition hover:bg-[#c9e6f5] focus:outline-none focus:ring-2 focus:ring-sky-300 focus:ring-offset-2"
             >
               Aprobar y Enviar
             </button>
@@ -542,18 +561,133 @@ function DetailView({ item, onBack }) {
 export default function AgoraApp() {
   const [vista, setVista] = useState("login");
   const [seleccionId, setSeleccionId] = useState(null);
+  const [token, setToken] = useState(null);
+  const [pqrsds, setPqrsds] = useState([]);
+  const [sessionChecked, setSessionChecked] = useState(false);
+  const [loginSubmitting, setLoginSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState(null);
+  const [loadPending, setLoadPending] = useState(false);
+  const [loadError, setLoadError] = useState(null);
 
-  const mockPqrsds = useMemo(() => buildMockPqrsds(), []);
+  const loadBandeja = useCallback(async (authToken) => {
+    setLoadPending(true);
+    setLoadError(null);
+    try {
+      const raw = await fetchPqrsds(authToken);
+      setPqrsds(raw.map(normalizePqrsdItem));
+    } catch (e) {
+      if (e.code === "UNAUTHORIZED") {
+        clearStoredToken();
+        setToken(null);
+        setPqrsds([]);
+        setVista("login");
+        setLoginError("Sesión expirada. Vuelve a ingresar.");
+      } else {
+        setLoadError(
+          e.message === "Failed to fetch"
+            ? "No hay conexión con el servidor (¿está corriendo el backend en el puerto 8080?)."
+            : e.message
+        );
+      }
+    } finally {
+      setLoadPending(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const stored = getStoredToken();
+    if (!stored) {
+      setSessionChecked(true);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        await fetchMe(stored);
+        if (cancelled) return;
+        setToken(stored);
+        setVista("dashboard");
+        await loadBandeja(stored);
+      } catch {
+        clearStoredToken();
+      } finally {
+        if (!cancelled) setSessionChecked(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loadBandeja]);
+
   const seleccion = useMemo(
-    () => mockPqrsds.find((p) => p.id === seleccionId) ?? null,
-    [mockPqrsds, seleccionId]
+    () => pqrsds.find((p) => p.id === seleccionId) ?? null,
+    [pqrsds, seleccionId]
   );
 
-  if (vista === "login") {
-    return <LoginView onLogin={() => setVista("dashboard")} />;
+  const handleLogin = async (username, password) => {
+    setLoginSubmitting(true);
+    setLoginError(null);
+    try {
+      const res = await apiLogin(username, password);
+      setStoredToken(res.token);
+      setToken(res.token);
+      setVista("dashboard");
+      await loadBandeja(res.token);
+    } catch (e) {
+      setLoginError(e.message || "Error de inicio de sesión.");
+    } finally {
+      setLoginSubmitting(false);
+    }
+  };
+
+  const handleLogout = () => {
+    clearStoredToken();
+    setToken(null);
+    setPqrsds([]);
+    setSeleccionId(null);
+    setLoadError(null);
+    setVista("login");
+  };
+
+  if (!sessionChecked) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 text-sm text-gray-600">
+        Cargando…
+      </div>
+    );
   }
 
-  if (vista === "detalle" && seleccion) {
+  if (vista === "login") {
+    return (
+      <LoginView
+        onSubmit={handleLogin}
+        submitting={loginSubmitting}
+        error={loginError}
+      />
+    );
+  }
+
+  if (vista === "detalle") {
+    if (!seleccion) {
+      return (
+        <div className="flex min-h-screen flex-col bg-gray-50">
+          <AppNavbar />
+          <div className="mx-auto max-w-lg flex-1 px-4 py-10 text-center">
+            <p className="text-sm text-gray-700">No se encontró la petición.</p>
+            <button
+              type="button"
+              onClick={() => {
+                setSeleccionId(null);
+                setVista("dashboard");
+              }}
+              className="mt-4 rounded-full bg-[var(--agora-surface)] px-5 py-2 text-sm font-semibold text-gray-900"
+            >
+              Volver al listado
+            </button>
+          </div>
+        </div>
+      );
+    }
     return (
       <DetailView
         item={seleccion}
@@ -567,15 +701,15 @@ export default function AgoraApp() {
 
   return (
     <DashboardView
-      items={mockPqrsds}
+      items={pqrsds}
+      loading={loadPending}
+      loadError={loadError}
+      onRetry={() => token && loadBandeja(token)}
       onSelect={(id) => {
         setSeleccionId(id);
         setVista("detalle");
       }}
-      onLogout={() => {
-        setSeleccionId(null);
-        setVista("login");
-      }}
+      onLogout={handleLogout}
     />
   );
 }
