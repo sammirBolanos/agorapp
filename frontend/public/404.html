@@ -4,13 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Redireccionar</title>
-    <script>
-      // Redirige todas las rutas SPA a index.html
-      const path = window.location.pathname;
-      if (!path.includes('.')) {
-        window.location.href = '/?redirect=' + encodeURIComponent(path);
-      }
-    </script>
   </head>
-  <body></body>
+  <body>
+    <script>
+      window.location.replace('/');
+    </script>
+  </body>
 </html>
